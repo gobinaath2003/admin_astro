@@ -1,0 +1,39 @@
+{
+  "name": "admin_astro_server",
+  "version": "1.0.0",
+  "description": "Astrologer API server",
+  "main": "couserapi.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node couserapi.js",
+    "dev": "nodemon couserapi.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rksolutionscode/admin_astro.git"
+  },
+  "keywords": [
+    "astrologer",
+    "API",
+    "Node.js",
+    "Express",
+    "PostgreSQL"
+  ],
+  "author": "Your Name",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rksolutionscode/admin_astro/issues"
+  },
+  "homepage": "https://github.com/rksolutionscode/admin_astro#readme",
+  "dependencies": {
+    "@faker-js/faker": "^9.9.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "faker": "^5.5.3",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

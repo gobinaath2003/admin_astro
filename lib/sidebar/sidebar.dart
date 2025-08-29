@@ -117,6 +117,16 @@ class Sidebar extends StatelessWidget {
         'label': "தாந்திரிகம்",
         'route': '/thantrigam',
       },
+       {
+        'icon': Icons.add,   
+        'label': "Add course",
+        'route': '/astroprofile',
+      },
+       {
+        'icon': Icons.admin_panel_settings,   
+        'label': "Add course",
+        'route': '/course',
+      },
       {'icon': Icons.campaign, 'label': "விளம்பரம்", 'route': '/advertisement'},
     ];
 
