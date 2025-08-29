@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:testadm/star/star_model.dart';
-import 'package:testadm/star/star_services.dart';
-import 'package:testadm/star/star_utils.dart';
+import 'laknam_model.dart';
+import 'laknam_service.dart';
+import 'laknam_utils.dart';
 
-class StarController extends GetxController {
-  final StarService service;
+class LaknamController extends GetxController {
+  final LaknamService service;
 
-  StarController({required this.service});
+  LaknamController({required this.service});
 
-  var posts = <StarPost>[].obs;
-  var selectedRasi = 'அனைத்து நட்சத்திரங்கள்'.obs;
-  var selectedType = 'All'.obs;
+  var posts = <LaknamPost>[].obs;
+
+  // Selected Lagnam
+  final selectedLagnam = 'அனைத்து லக்னம்'.obs;
+
+  // Selected Type
+  final selectedType = 'All'.obs;
 
   final List<String> allTypes = [
     'All',
@@ -21,104 +25,102 @@ class StarController extends GetxController {
     'Negative',
   ];
 
+  // Note input controller
+  final noteController = TextEditingController();
+
+  /// Mapping Lagnam name to backend LaknamId
+  final Map<String, int> _laknamNameToId = {
+    'அனைத்து லக்னம்': 0,
+    'மேஷம் லக்னம்': 1,
+    'ரிஷபம் லக்னம்': 2,
+    'மிதுனம் லக்னம்': 3,
+    'கடகம் லக்னம்': 4,
+    'சிம்மம் லக்னம்': 5,
+    'கன்னி லக்னம்': 6,
+    'துலாம் லக்னம்': 7,
+    'விருச்சிகம் லக்னம்': 8,
+    'தனுசு லக்னம்': 9,
+    'மகரம் லக்னம்': 10,
+    'கும்பம் லக்னம்': 11,
+    'மீனம் லக்னம்': 12,
+  };
+
   @override
   void onInit() {
     super.onInit();
-    print("StarController initialized");
     fetchPosts();
   }
 
-  // Fetch all star posts
+  /// Fetch posts created by the logged-in admin
   Future<void> fetchPosts() async {
     try {
-      print("Fetching all star posts...");
-      final result = await service.fetchAllPosts();
+      // Fetch only admin posts from backend
+      var result = await service.fetchPostsByAdmin();
+
+      // Filter by selected Lagnam if not "All"
+      if (selectedLagnam.value != 'அனைத்து லக்னம்') {
+        final laknamId = _laknamNameToId[selectedLagnam.value]!;
+        result = result.where((p) => p.laknamId == laknamId).toList();
+      }
+
+      // Filter by type if not "All"
+      if (selectedType.value != 'All') {
+        result = result.where((p) => p.type == selectedType.value).toList();
+      }
+
       posts.value = result;
-      print("Fetched ${posts.length} posts");
     } catch (e) {
       print("Fetch Error: $e");
+      Get.snackbar("Error", "பதிவுகளை பெற முடியவில்லை: $e");
     }
   }
 
-  // Create a new star post
-  Future<void> createPost(int starId, String description, String type) async {
+  /// Add a new post for the selected Lagnam
+  Future<void> addPost() async {
+    final content = noteController.text.trim();
+    final laknam = selectedLagnam.value;
+
+    if (laknam != 'அனைத்து லக்னம்' && content.isNotEmpty) {
+      try {
+        final laknamId = _laknamNameToId[laknam]!;
+        final typeToSend =
+            selectedType.value == 'All' ? 'Positive' : selectedType.value;
+        await service.createPost(laknamId, content, typeToSend);
+        noteController.clear();
+        await fetchPosts();
+        Get.snackbar("Success", "$laknam க்கு பதிவு சேர்க்கப்பட்டது");
+      } catch (e) {
+        Get.snackbar("Error", "பதிவு சேர்க்க முடியவில்லை: $e");
+      }
+    } else {
+      Get.snackbar("Error", "ஒரு லக்னம் மற்றும் குறிப்பை உள்ளிடவும்");
+    }
+  }
+
+  /// Update existing post
+  Future<void> updatePost(int postId, String content, String laknamName) async {
     try {
-      print(
-        "Creating post for starId: $starId, description: $description, type: $type",
-      );
-      await service.createPost(starId, description, type);
+      final laknamId = _laknamNameToId[laknamName]!;
+      await service.updatePost(postId, content, laknamId);
       await fetchPosts();
-      print("Post created successfully");
+      Get.snackbar("Success", "பதிவு புதுப்பிக்கப்பட்டது");
     } catch (e) {
-      print("Create Error: $e");
+      Get.snackbar("Error", "பதிவு புதுப்பிக்க முடியவில்லை: $e");
     }
   }
 
-  // Update an existing post
-  Future<void> updatePost(int postId, String content, int starId) async {
-    try {
-      print(
-        "Updating postId: $postId with content: $content for starId: $starId",
-      );
-      await service.updatePost(postId, content, starId);
-      await fetchPosts();
-      print("Post updated successfully");
-    } catch (e) {
-      print("Update Error: $e");
-    }
-  }
-
-  // Delete a post
+  /// Delete a post
   Future<void> deletePost(int postId) async {
     try {
-      print("Deleting postId: $postId");
       await service.deletePost(postId);
       await fetchPosts();
-      print("Post deleted successfully");
+      Get.snackbar("Success", "பதிவு நீக்கப்பட்டது");
     } catch (e) {
-      print("Delete Error: $e");
+      Get.snackbar("Error", "பதிவு நீக்க முடியவில்லை: $e");
     }
   }
 
-  // Show edit dialog for a post
-  void showEditDialog(BuildContext context, StarPost post) {
-    final textController = TextEditingController(text: post.description);
-    final starIndex = post.starId;
-
-    showDialog(
-      context: context,
-      builder:
-          (_) => AlertDialog(
-            title: const Text("Edit Star Note"),
-            content: TextField(controller: textController),
-            actions: [
-              TextButton(
-                child: const Text("Cancel"),
-                onPressed: () {
-                  print("Edit cancelled for postId: ${post.postId}");
-                  Navigator.pop(context);
-                },
-              ),
-              ElevatedButton(
-                child: const Text("Update"),
-                onPressed: () async {
-                  if (textController.text.isNotEmpty) {
-                    print("Updating postId: ${post.postId}");
-                    await updatePost(
-                      post.postId,
-                      textController.text,
-                      starIndex,
-                    );
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-            ],
-          ),
-    );
-  }
-
-  // Bulk upload dialog
+  /// Show bulk upload dialog (like StarController)
   Future<void> showBulkUploadDialog() async {
     final bulkController = TextEditingController();
 
@@ -133,7 +135,7 @@ class StarController extends GetxController {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  "பல நட்சத்திர குறிப்புகள் சேர்க்க",
+                  "பல லக்னக் குறிப்புகள் சேர்க்க",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -154,7 +156,7 @@ class StarController extends GetxController {
                   ),
                 ),
                 const SizedBox(height: 15),
-                // Star dropdown
+                // Lagnam dropdown
                 Obx(
                   () => Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -165,22 +167,19 @@ class StarController extends GetxController {
                     ),
                     child: DropdownButton<String>(
                       isExpanded: true,
-                      value: selectedRasi.value,
+                      value: selectedLagnam.value,
                       underline: const SizedBox(),
                       items:
-                          rasis
+                          _laknamNameToId.keys
                               .map(
-                                (star) => DropdownMenuItem(
-                                  value: star,
-                                  child: Text(star),
+                                (lagnam) => DropdownMenuItem(
+                                  value: lagnam,
+                                  child: Text(lagnam),
                                 ),
                               )
                               .toList(),
                       onChanged: (newValue) {
-                        if (newValue != null) {
-                          selectedRasi.value = newValue;
-                          print("Selected star changed to: $newValue");
-                        }
+                        if (newValue != null) selectedLagnam.value = newValue;
                       },
                     ),
                   ),
@@ -209,10 +208,7 @@ class StarController extends GetxController {
                               )
                               .toList(),
                       onChanged: (newValue) {
-                        if (newValue != null) {
-                          selectedType.value = newValue;
-                          print("Selected type changed to: $newValue");
-                        }
+                        if (newValue != null) selectedType.value = newValue;
                       },
                     ),
                   ),
@@ -228,7 +224,6 @@ class StarController extends GetxController {
                         ),
                         child: const Text("ரத்து செய்யவும்"),
                         onPressed: () {
-                          print("Bulk upload cancelled");
                           Get.back();
                         },
                       ),
@@ -250,19 +245,19 @@ class StarController extends GetxController {
                         ),
                         onPressed: () async {
                           final notes = bulkController.text.trim().split('\n');
-                          final star = selectedRasi.value;
+                          final lagnam = selectedLagnam.value;
                           final type = selectedType.value;
 
-                          if (star == 'அனைத்து நட்சத்திரங்கள்') {
+                          if (lagnam == 'அனைத்து லக்னம்') {
                             Get.snackbar(
                               "பிழை",
-                              "ஒரு குறிப்பிட்ட நட்சத்திரத்தை தேர்வு செய்யவும்.",
+                              "ஒரு குறிப்பிட்ட லக்னம் தேர்வு செய்யவும்.",
                               backgroundColor: Colors.red.shade100,
                             );
                             return;
                           }
 
-                          final starId = rasis.indexOf(star); // ✅ correct ID
+                          final laknamId = _laknamNameToId[lagnam]!;
                           bool success = true;
 
                           for (final note in notes) {
@@ -270,30 +265,26 @@ class StarController extends GetxController {
                               String typeToSend =
                                   type == 'All' ? 'Positive' : type;
                               try {
-                                print("Adding note: $note");
                                 await service.createPost(
-                                  starId,
+                                  laknamId,
                                   note.trim(),
                                   typeToSend,
                                 );
                               } catch (e) {
                                 success = false;
-                                print("Error adding note: $e");
                               }
                             }
                           }
 
                           if (success) {
-                            print("All notes added successfully for $star");
-                            Get.back(); // close dialog
+                            Get.back();
                             fetchPosts();
                             Get.snackbar(
                               "வெற்றி",
-                              "$star க்கான அனைத்து குறிப்புகளும் சேர்க்கப்பட்டன.",
+                              "$lagnam க்கு அனைத்து குறிப்புகளும் சேர்க்கப்பட்டன.",
                               backgroundColor: Colors.green.shade100,
                             );
                           } else {
-                            print("Some notes failed to upload for $star");
                             Get.snackbar(
                               "பிழை",
                               "சில குறிப்புகளை சேர்க்க முடியவில்லை.",
@@ -310,6 +301,49 @@ class StarController extends GetxController {
           ),
         ),
       ),
+    );
+  }
+
+  /// Show Edit Dialog for a Laknam post
+  void showEditDialog(BuildContext context, LaknamPost post) {
+    final editController = TextEditingController(text: post.content);
+
+    showDialog(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            title: const Text("குறிப்பு திருத்தம்"),
+            content: TextField(
+              controller: editController,
+              maxLines: null,
+              decoration: const InputDecoration(
+                hintText: "குறிப்பு திருத்தவும்",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final newContent = editController.text.trim();
+                  if (newContent.isNotEmpty) {
+                    await updatePost(
+                      post.postId,
+                      newContent,
+                      selectedLagnam.value,
+                    );
+                    Navigator.pop(context);
+                  } else {
+                    Get.snackbar("Error", "குறிப்பு வெறுமையாக இருக்க முடியாது");
+                  }
+                },
+                child: const Text("Update"),
+              ),
+            ],
+          ),
     );
   }
 }

@@ -10,12 +10,12 @@ plugins {
 
 android {
     namespace = "com.example.testadm"
-    compileSdk = 33  // Force compileSdk
+    compileSdk = 35  // updated to 35
 
     defaultConfig {
         applicationId = "com.example.testadm"
         minSdk = 21
-        targetSdk = 33  // Force targetSdk
+        targetSdk = 35  // updated to 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -29,7 +29,6 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 }
-
 
 flutter {
     source = "../.."

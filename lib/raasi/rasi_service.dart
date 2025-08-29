@@ -39,7 +39,7 @@ class RasiService {
     int adminId,
   ) async {
     final url =
-        'https://astro-j7b4.onrender.com/api/admins/raasi/admin/$adminId';
+        'https://astro-j7b4.onrender.com/api/admins/raasi/admin/adminId';
     print("Fetching Rasi posts for admin $adminId with token: $token");
 
     final response = await http.get(

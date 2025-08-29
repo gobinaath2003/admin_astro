@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:testadm/lagnam.dart';
+import 'package:testadm/lagnam/laknam_screen.dart';
 import 'package:testadm/services/auth_controller.dart';
 import 'package:testadm/sugggestion/PrefsHelper.dart';
 
@@ -17,50 +18,63 @@ class _LoginPageState extends State<Logincredintialpage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final ValueNotifier<bool> isPasswordVisible = ValueNotifier<bool>(false);
-  final authController = Get.put(AuthController());
+  final authController = Get.find<AuthController>();
 
   Future<void> validateAndLogin() async {
     print("[Login] Sign in button pressed");
 
-    final String email = emailController.text.trim();
-    final String password = passwordController.text;
+    final email = emailController.text.trim();
+    final password = passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all fields")),
-      );
+      print("[Login] Validation failed: empty fields");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
       return;
     }
 
     try {
+      print("[Login] Sending login request for email: $email");
+
       final response = await http.post(
         Uri.parse('https://astro-j7b4.onrender.com/api/admins/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
 
-      print("[Login] Response status code: ${response.statusCode}");
-      print("[Login] Response body: ${response.body}");
+      print("[Login] Response: ${response.statusCode} - ${response.body}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         final token = data['token'];
+        final adminId = data['id'];
 
-        if (token == null) throw Exception('Token not found');
+        print("[Login] Received token: $token");
+        print("[Login] Received Admin ID: $adminId");
 
-        // Save token and adminId automatically from JWT
+        if (token == null) {
+          print("[Login] Token is null! Login cannot proceed.");
+          throw Exception("Token not found");
+        }
 
-        // Update authController
+        // Save token locally
+        await PrefsHelper.saveAuthData(token, adminId);
+        print("[Login] Token and Admin ID saved to PrefsHelper");
+
+        // Update AuthController
         authController.setToken(token);
-        final adminId = await PrefsHelper.getAdminId();
-        authController.setAdminId(adminId ?? 0);
+        authController.setAdminId(adminId);
+        print("[Login] Token in AuthController: ${authController.token.value}");
+        print(
+          "[Login] AdminID in AuthController: ${authController.adminId.value}",
+        );
 
-        print("[Login] Login successful. Token: $token, AdminID: $adminId");
-
-        // Navigate to Lagnam screen
-        Get.offAll(() => Lagnam());
+        print("[Login] Login successful, navigating to Lagnam page...");
+        Get.offAll(() => LaknamScreen());
       } else {
         final errorData = jsonDecode(response.body);
+        print("[Login] Login failed with status ${response.statusCode}");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -70,10 +84,10 @@ class _LoginPageState extends State<Logincredintialpage> {
         );
       }
     } catch (e) {
-      print("[Login] Exception during login: $e");
+      print("[Login] Exception occurred: $e");
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
     }
   }
 

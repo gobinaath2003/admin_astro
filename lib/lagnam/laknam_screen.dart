@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:testadm/raasi/add_rasi_controller.dart';
-import 'package:testadm/raasi/rasi_utils.dart';
-import 'package:testadm/sidebar/sidebar.dart';
+import '../sidebar/sidebar.dart';
+import 'laknam_controller.dart';
+import 'laknam_service.dart';
+import 'laknam_utils.dart';
 
-class AddRasiScreen extends StatelessWidget {
-  final String bearerToken;
-
-  AddRasiScreen({Key? key, required this.bearerToken}) : super(key: key);
-
-  final AddRasiController controller = Get.put(AddRasiController());
+class LaknamScreen extends StatelessWidget {
+  final LaknamController controller = Get.put(
+    LaknamController(service: LaknamService()),
+  );
 
   final List<String> allTypes = [
     'All',
@@ -24,31 +23,30 @@ class AddRasiScreen extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final isLargeScreen = screenWidth >= 600;
 
-    controller.initData(bearerToken);
-
     return Scaffold(
-      key: controller.scaffoldKey,
       drawer: isLargeScreen ? null : Sidebar(),
       appBar:
           isLargeScreen
-              ? null // no AppBar for large screens
+              ? null
               : AppBar(
                 backgroundColor: Colors.deepOrange,
                 title: const Text(
-                  "Raasi",
+                  "Laknam",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                leading: IconButton(
-                  icon: const Icon(Icons.menu),
-                  onPressed:
-                      () => controller.scaffoldKey.currentState?.openDrawer(),
+                leading: Builder(
+                  builder:
+                      (context) => IconButton(
+                        icon: const Icon(Icons.menu),
+                        onPressed: () => Scaffold.of(context).openDrawer(),
+                      ),
                 ),
               ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.deepOrange,
-        onPressed: controller.uploadCsvFile,
+        onPressed: controller.showBulkUploadDialog,
         child: const Icon(Icons.upload_file, color: Colors.white),
-        tooltip: 'CSV கோப்பு பதிவேற்றவும்',
+        tooltip: 'Bulk Upload Laknam Notes',
       ),
       body: SafeArea(
         child: Row(
@@ -61,9 +59,7 @@ class AddRasiScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top menu button for small screens
-
-                    // Dropdowns + Add Button Card
+                    // Top Card: Dropdowns + Add Button (like StarScreen)
                     Card(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -75,11 +71,11 @@ class AddRasiScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // Only show dropdowns on mobile (small screen)
+                            // Only show dropdowns on small screens
                             if (!isLargeScreen) ...[
                               Row(
                                 children: [
-                                  // Rasi Dropdown
+                                  // Lagnam Dropdown
                                   Expanded(
                                     flex: 3,
                                     child: DropdownButtonHideUnderline(
@@ -105,22 +101,24 @@ class AddRasiScreen extends StatelessWidget {
                                           child: DropdownButton<String>(
                                             isExpanded: true,
                                             value:
-                                                controller.selectedRasi.value,
+                                                controller.selectedLagnam.value,
                                             onChanged: (newValue) {
                                               if (newValue != null) {
-                                                controller.selectedRasi.value =
-                                                    newValue;
+                                                controller
+                                                    .selectedLagnam
+                                                    .value = newValue;
+                                                controller.fetchPosts();
                                               }
                                             },
                                             items:
-                                                controller.rasis
+                                                lagnamList
                                                     .map(
                                                       (
-                                                        rasi,
+                                                        lagnam,
                                                       ) => DropdownMenuItem(
-                                                        value: rasi,
+                                                        value: lagnam,
                                                         child: Text(
-                                                          rasi,
+                                                          lagnam,
                                                           style:
                                                               const TextStyle(
                                                                 fontSize: 14,
@@ -188,11 +186,10 @@ class AddRasiScreen extends StatelessWidget {
                                   ),
                                 ],
                               ),
-
                               const SizedBox(height: 16),
                             ],
 
-                            // Add Button (next row)
+                            // Add Button
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.deepOrange,
@@ -218,7 +215,8 @@ class AddRasiScreen extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
+                    // Note Input
 
                     // Data Table Card
                     Expanded(
@@ -230,10 +228,10 @@ class AddRasiScreen extends StatelessWidget {
                         child: Padding(
                           padding: const EdgeInsets.all(12.0),
                           child: Obx(() {
-                            if (controller.filteredPosts.isEmpty) {
+                            if (controller.posts.isEmpty) {
                               return const Center(
                                 child: Text(
-                                  "தேர்வு செய்யப்பட்ட ராசிக்கு தொடர்புடைய தரவுகள் கிடைக்கவில்லை.",
+                                  "தேர்வு செய்யப்பட்ட லக்னத்திற்கு தொடர்புடைய தரவுகள் இல்லை",
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: Colors.black54,
@@ -246,18 +244,16 @@ class AddRasiScreen extends StatelessWidget {
                               scrollDirection: Axis.horizontal,
                               child: ConstrainedBox(
                                 constraints: BoxConstraints(
-                                  minWidth:
-                                      MediaQuery.of(context)
-                                          .size
-                                          .width, // make table take full width
+                                  minWidth: MediaQuery.of(context).size.width,
                                 ),
                                 child: DataTable(
                                   headingRowColor: MaterialStateProperty.all(
                                     Colors.deepOrange.shade100,
                                   ),
-                                  headingRowHeight: 40, // adjust header height
+                                  headingRowHeight:
+                                      60, // increase header height
                                   columnSpacing: 16,
-                                  dataRowHeight: null, // let rows auto-size
+                                  dataRowHeight: 50,
                                   headingTextStyle: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
@@ -268,7 +264,7 @@ class AddRasiScreen extends StatelessWidget {
                                     DataColumn(label: Text('செயல்கள்')),
                                   ],
                                   rows:
-                                      controller.filteredPosts.asMap().entries.map((
+                                      controller.posts.asMap().entries.map((
                                         entry,
                                       ) {
                                         final index = entry.key + 1;
@@ -279,47 +275,24 @@ class AddRasiScreen extends StatelessWidget {
                                             DataCell(
                                               Padding(
                                                 padding: const EdgeInsets.only(
-                                                  top: 8.0,
-                                                  bottom: 8.0,
-                                                ),
-                                                child: Text(
-                                                  index.toString(),
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
+                                                  top: 12.0,
+                                                ), // add spacing
+                                                child: Text(index.toString()),
                                               ),
                                             ),
                                             DataCell(
                                               Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      vertical: 8.0,
-                                                    ),
-                                                child: ConstrainedBox(
-                                                  constraints:
-                                                      const BoxConstraints(
-                                                        maxWidth: 250,
-                                                      ),
-                                                  child: Text(
-                                                    post.content ?? '',
-                                                    softWrap: true,
-                                                    overflow:
-                                                        TextOverflow.visible,
-                                                    style: const TextStyle(
-                                                      fontSize: 12,
-                                                      height: 1.4,
-                                                    ),
-                                                  ),
-                                                ),
+                                                padding: const EdgeInsets.only(
+                                                  top: 12.0,
+                                                ), // add spacing
+                                                child: Text(post.content),
                                               ),
                                             ),
                                             DataCell(
                                               Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      vertical: 8.0,
-                                                    ),
+                                                padding: const EdgeInsets.only(
+                                                  top: 12.0,
+                                                ),
                                                 child: Row(
                                                   children: [
                                                     IconButton(
@@ -331,6 +304,7 @@ class AddRasiScreen extends StatelessWidget {
                                                       onPressed:
                                                           () => controller
                                                               .showEditDialog(
+                                                                context,
                                                                 post,
                                                               ),
                                                     ),
@@ -342,7 +316,7 @@ class AddRasiScreen extends StatelessWidget {
                                                       ),
                                                       onPressed:
                                                           () => controller
-                                                              .deleteRaasiPost(
+                                                              .deletePost(
                                                                 post.postId,
                                                               ),
                                                     ),
@@ -360,10 +334,9 @@ class AddRasiScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 10),
 
-                    // Bulk Upload Button
+                    // Bottom-right bulk upload button
                     Align(
                       alignment: Alignment.centerRight,
                       child: ElevatedButton.icon(

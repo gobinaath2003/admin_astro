@@ -1,7 +1,11 @@
 import 'package:get/get.dart';
 import 'package:testadm/addcourse/astroprofile.dart';
 import 'package:testadm/bhavam.dart';
+<<<<<<< HEAD
 import 'package:testadm/coursedetails/sylabus.dart';
+=======
+import 'package:testadm/bhavam/bhavam_screen.dart';
+>>>>>>> 403cf4cdeddf478f02c023232f639213ab1bf7f0
 import 'package:testadm/display/advertisement.dart';
 import 'package:testadm/display/ai.dart';
 import 'package:testadm/display/dhosham.dart';
@@ -11,8 +15,14 @@ import 'package:testadm/display/pariharam.dart';
 import 'package:testadm/display/parvai.dart';
 import 'package:testadm/display/prasanam.dart';
 import 'package:testadm/display/thantrigam.dart';
+import 'package:testadm/giraham/giraham_screen.dart';
 import 'package:testadm/lagnam.dart';
+<<<<<<< HEAD
 import 'package:testadm/logincredintial.dart';   // ✅ contains Logincredintialpage
+=======
+import 'package:testadm/lagnam/laknam_screen.dart';
+import 'package:testadm/logincredintial.dart';
+>>>>>>> 403cf4cdeddf478f02c023232f639213ab1bf7f0
 import 'package:testadm/logindata.dart';
 import 'package:testadm/planet.dart';
 import 'package:testadm/profiledata.dart';
@@ -40,10 +50,17 @@ class AppRoutes {
       page: () => StarScreen(bearerToken: authController.token.value),
     ),
     GetPage(name: '/suggestion', page: () => Suggestion()),
+<<<<<<< HEAD
     GetPage(name: '/lagnam', page: () => Lagnam()),
     GetPage(name: '/twocombination', page: () => Twoplanetconjuction()),
     GetPage(name: '/threecombination', page: () =>  Threecombination()),
     GetPage(name: '/bhavam', page: () =>  bhavamScreen()),
+=======
+    GetPage(name: '/lagnam', page: () => LaknamScreen()),
+    GetPage(name: '/twocombination', page: () => GirahamScreen()),
+    GetPage(name: '/threecombination', page: () => Threecombination()),
+    GetPage(name: '/bhavam', page: () => BhavamScreen()),
+>>>>>>> 403cf4cdeddf478f02c023232f639213ab1bf7f0
     GetPage(name: '/login', page: () => Logindata()),
     GetPage(name: '/ai', page: () =>  AddAiScreen()),
     GetPage(name: '/dhosham', page: () => Dhosham()),

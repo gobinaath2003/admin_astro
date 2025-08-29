@@ -76,16 +76,12 @@ class Sidebar extends StatelessWidget {
         'route': '/lagnam',
       },
       {'icon': Icons.circle, 'label': "பாவம்", 'route': '/bhavam'},
-      {
-        'icon': Icons.feedback,
-        'label': "2 சேர்க்கை",
-        'route': '/twocombination',
-      },
+      {'icon': Icons.feedback, 'label': "கிரகம்", 'route': '/twocombination'},
       {'icon': Icons.star, 'label': "நட்சத்திரங்கள்", 'route': '/star'},
       {'icon': Icons.brightness_4, 'label': "ராசி", 'route': '/rasi'},
       {
         'icon': Icons.brightness_1_outlined,
-        'label': "3 சேர்க்கை",
+        'label': "கிரக சேர்க்கை",
         'route': '/threecombination',
       },
 

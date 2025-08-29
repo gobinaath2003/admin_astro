@@ -9,18 +9,24 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   print("[MAIN] Flutter binding initialized");
 
+<<<<<<< HEAD
   // Register controllers
+=======
+  // Initialize controllers
+>>>>>>> 403cf4cdeddf478f02c023232f639213ab1bf7f0
   Get.put(PermissionController());
   print("[MAIN] PermissionController initialized");
 
   final authController = Get.put(AuthController());
   print("[MAIN] AuthController initialized");
 
+<<<<<<< HEAD
   // Default route
+=======
+  // Determine initial route
+>>>>>>> 403cf4cdeddf478f02c023232f639213ab1bf7f0
   String initialRoute = '/logincredential';
-
   try {
-    print("[MAIN] Reading token from SharedPreferences...");
     final token = await PrefsHelper.getToken();
     final adminId = await PrefsHelper.getAdminId() ?? 0;
 
@@ -32,19 +38,20 @@ void main() async {
       authController.setAdminId(adminId);
       initialRoute = '/lagnam';
       print("[MAIN] Token valid, setting initialRoute to /lagnam");
-    } else {
-      print("[MAIN] Token null or empty, staying on /logincredential");
     }
   } catch (e) {
-    print("[MAIN] Error reading token on startup: $e");
+    print("[MAIN] Error reading token: $e");
   }
 
+<<<<<<< HEAD
   // 👇 Print all registered routes for debugging
   for (var page in AppRoutes.routes) {
     print("[ROUTING] Registered route: ${page.name}");
   }
 
   print("[MAIN] Running app with initialRoute: $initialRoute");
+=======
+>>>>>>> 403cf4cdeddf478f02c023232f639213ab1bf7f0
   runApp(MyApp(initialRoute: initialRoute));
 }
 
